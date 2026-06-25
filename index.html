@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#B5202C" />
+  <title>Borrowed / Returned Items Tracker</title>
+  <style>
+    :root{
+      --brand:#B5202C;
+      --brand-dark:#83151F;
+      --brand-soft:#FFF2F3;
+      --ink:#202124;
+      --muted:#6E737A;
+      --line:#E8E9EB;
+      --bg:#F6F7F9;
+      --card:#FFFFFF;
+      --success:#16814A;
+      --success-soft:#EAF8F0;
+      --warning:#A55F00;
+      --warning-soft:#FFF5E2;
+      --danger:#B42318;
+      --danger-soft:#FFF0EE;
+      --shadow:0 10px 28px rgba(36, 38, 44, .07);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height:100vh;
+      padding-bottom:90px;
+    }
+
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer;touch-action:manipulation}
+    .app{max-width:1180px;margin:0 auto;padding:18px 16px 32px}
+
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      margin:4px 0 18px;
+    }
+    .brand{display:flex;align-items:center;gap:11px;min-width:0}
+    .brand-mark{
+      width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+      display:grid;place-items:center;box-shadow:0 8px 18px rgba(181,32,44,.25);flex:none;
+    }
+    .brand-mark svg{width:24px;height:24px;stroke:#fff}
+    .brand h1{font-size:18px;line-height:1.2;margin:0;font-weight:800;letter-spacing:-.02em}
+    .brand p{font-size:12px;color:var(--muted);margin:3px 0 0}
+
+    .header-actions{display:flex;gap:8px;align-items:center}
+    .icon-btn,.ghost-btn,.primary-btn,.danger-btn,.soft-btn{
+      min-height:42px;border:0;border-radius:12px;padding:0 14px;font-weight:700;transition:.18s ease;
+    }
+    .icon-btn{width:42px;padding:0;background:#fff;border:1px solid var(--line);display:grid;place-items:center}
+    .icon-btn:hover,.ghost-btn:hover{background:#F1F2F4}
+    .icon-btn svg{width:19px;height:19px;stroke:var(--ink)}
+    .primary-btn{color:white;background:var(--brand);box-shadow:0 8px 16px rgba(181,32,44,.2)}
+    .primary-btn:hover{background:var(--brand-dark);transform:translateY(-1px)}
+    .ghost-btn{background:#fff;border:1px solid var(--line);color:var(--ink)}
+    .soft-btn{background:var(--brand-soft);color:var(--brand-dark)}
+    .danger-btn{background:var(--danger-soft);color:var(--danger)}
+    .small-btn{min-height:34px;border-radius:10px;padding:0 10px;font-size:12px}
+
+    .hero{
+      border-radius:24px;padding:22px;background:linear-gradient(128deg,#BC2632 0%,#8F1722 100%);color:#fff;
+      overflow:hidden;position:relative;box-shadow:0 14px 30px rgba(134,22,32,.2);
+    }
+    .hero:after{content:"";position:absolute;width:260px;height:260px;border:36px solid rgba(255,255,255,.08);border-radius:50%;right:-115px;top:-150px}
+    .hero:before{content:"";position:absolute;width:150px;height:150px;border:25px solid rgba(255,255,255,.07);border-radius:50%;right:110px;bottom:-120px}
+    .hero-content{position:relative;z-index:1;display:flex;justify-content:space-between;gap:20px;align-items:end}
+    .hero h2{font-size:24px;line-height:1.12;letter-spacing:-.04em;margin:0 0 8px;max-width:530px}
+    .hero p{margin:0;color:rgba(255,255,255,.82);font-size:14px;max-width:560px;line-height:1.5}
+    .hero .primary-btn{background:#fff;color:var(--brand-dark);box-shadow:none;white-space:nowrap}
+    .hero .primary-btn:hover{background:#FFEDEF}
+
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+    .stat-card{background:var(--card);border:1px solid rgba(230,232,235,.9);box-shadow:var(--shadow);border-radius:var(--radius);padding:15px;min-width:0}
+    .stat-label{font-size:12px;color:var(--muted);font-weight:700;display:flex;gap:7px;align-items:center}
+    .stat-label span{display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:var(--brand-soft);color:var(--brand)}
+    .stat-label svg{width:15px;height:15px;stroke:currentColor}
+    .stat-number{font-size:27px;line-height:1;font-weight:850;letter-spacing:-.05em;margin-top:11px}
+    .stat-note{font-size:11px;color:var(--muted);margin-top:7px}
+
+    .toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 12px}
+    .toolbar-left,.toolbar-right{display:flex;gap:10px;align-items:center;min-width:0}
+    .search-wrap{position:relative;min-width:250px;flex:1}
+    .search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;stroke:var(--muted)}
+    .search-wrap input,.filter-select{width:100%;height:44px;border-radius:12px;border:1px solid var(--line);background:#fff;outline:none;color:var(--ink)}
+    .search-wrap input{padding:0 14px 0 39px}
+    .search-wrap input:focus,.filter-select:focus,.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(181,32,44,.11)}
+    .filter-select{padding:0 34px 0 12px;min-width:145px}
+
+    .record-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .record-card{background:var(--card);border:1px solid rgba(230,232,235,.9);box-shadow:var(--shadow);border-radius:var(--radius);padding:16px;transition:.18s ease}
+    .record-card:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(36,38,44,.1)}
+    .record-head{display:flex;gap:12px;justify-content:space-between;align-items:flex-start}
+    .record-event{font-size:15px;line-height:1.25;font-weight:800;margin:0;letter-spacing:-.015em}
+    .record-id{font-size:11px;color:var(--muted);font-weight:700;margin-top:4px}
+    .status-pill{display:inline-flex;align-items:center;white-space:nowrap;font-size:11px;font-weight:800;border-radius:999px;padding:6px 9px}
+    .status-out{background:var(--warning-soft);color:var(--warning)}
+    .status-returned{background:var(--success-soft);color:var(--success)}
+    .status-overdue{background:var(--danger-soft);color:var(--danger)}
+    .status-partial{background:#EEF4FF;color:#2556A9}
+
+    .record-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 13px;padding:12px;background:#FAFAFB;border-radius:13px}
+    .meta-label{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+    .meta-value{font-size:13px;font-weight:750;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .items-preview{border-top:1px solid var(--line);padding-top:12px}
+    .items-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .items-label{font-size:12px;font-weight:800}
+    .item-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .item-chip{font-size:11px;font-weight:700;background:#F3F4F6;padding:6px 8px;border-radius:8px;white-space:nowrap}
+    .record-footer{margin-top:14px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .due-text{font-size:11px;color:var(--muted);font-weight:650}
+    .record-actions{display:flex;gap:7px}
+
+    .empty{padding:54px 22px;background:#fff;border:1px dashed #D7D9DE;border-radius:var(--radius);text-align:center;color:var(--muted)}
+    .empty-icon{width:52px;height:52px;border-radius:16px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;margin:0 auto 12px}
+    .empty-icon svg{width:25px;height:25px;stroke:currentColor}
+    .empty h3{margin:0 0 7px;color:var(--ink);font-size:16px}
+    .empty p{margin:0 auto 14px;max-width:430px;font-size:13px;line-height:1.5}
+
+    .fab{position:fixed;right:18px;bottom:18px;border:0;border-radius:17px;padding:0 17px;height:54px;background:var(--brand);color:#fff;font-weight:800;display:flex;gap:8px;align-items:center;box-shadow:0 12px 24px rgba(181,32,44,.28);z-index:12}
+    .fab svg{width:18px;height:18px;stroke:currentColor}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(17,19,23,.45);display:none;align-items:end;justify-content:center;z-index:30;padding:0}
+    .modal-backdrop.open{display:flex}
+    .modal{width:min(760px,100%);max-height:94vh;background:#fff;border-radius:24px 24px 0 0;overflow:auto;animation:slideIn .22s ease both}
+    @keyframes slideIn{from{transform:translateY(26px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .modal-header{position:sticky;top:0;background:#fff;z-index:2;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:18px 18px 15px}
+    .modal-title{font-size:18px;margin:0;letter-spacing:-.025em}
+    .modal-body{padding:18px}
+    .modal-footer{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:13px 18px;display:flex;justify-content:flex-end;gap:9px}
+    .close-x{border:0;width:36px;height:36px;border-radius:10px;background:#F3F4F6;display:grid;place-items:center}
+    .close-x svg{width:18px;height:18px;stroke:var(--ink)}
+
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+    .field{min-width:0}
+    .field.full{grid-column:1/-1}
+    .field label{font-size:12px;font-weight:800;display:block;margin:0 0 7px}
+    .field input,.field textarea,.field select{width:100%;border-radius:11px;border:1px solid var(--line);outline:none;padding:11px 12px;background:#fff;color:var(--ink)}
+    .field textarea{min-height:82px;resize:vertical;line-height:1.45}
+    .req{color:var(--brand)}
+    .section-label{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px}
+    .section-label h3{font-size:14px;margin:0;letter-spacing:-.01em}
+    .section-label span{font-size:11px;color:var(--muted)}
+    .item-row{display:grid;grid-template-columns:minmax(0,1fr)80px minmax(0,.8fr)40px;gap:8px;align-items:end;padding:10px;background:#FAFAFB;border:1px solid #EFF0F2;border-radius:13px;margin-bottom:8px}
+    .item-row .field label{font-size:10px;margin-bottom:5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+    .item-row .field input{padding:9px 10px;font-size:13px}
+    .remove-item{height:38px;width:40px;border:0;border-radius:10px;background:var(--danger-soft);color:var(--danger);display:grid;place-items:center}
+    .remove-item svg{width:17px;height:17px;stroke:currentColor}
+
+    .detail-heading{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:16px}
+    .detail-heading h3{margin:0;font-size:20px;letter-spacing:-.035em}
+    .detail-sub{font-size:12px;color:var(--muted);font-weight:700;margin-top:5px}
+    .detail-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:17px}
+    .info-box{background:#FAFAFB;border-radius:13px;padding:12px}
+    .info-box .meta-value{white-space:normal;overflow:visible}
+    .return-list{display:flex;flex-direction:column;gap:9px}
+    .return-row{display:grid;grid-template-columns:minmax(0,1fr)90px;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:13px}
+    .return-item-name{font-size:13px;font-weight:800}
+    .return-item-sub{font-size:11px;color:var(--muted);margin-top:3px}
+    .return-row input{width:100%;border-radius:9px;border:1px solid var(--line);padding:8px 9px;text-align:center;outline:none}
+    .return-row input:focus{border-color:var(--brand)}
+    .notes-box{margin-top:16px;padding:12px;border-radius:13px;background:#FAFAFB;font-size:13px;line-height:1.5;color:#43474D}
+    .notes-box strong{display:block;font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;letter-spacing:.04em}
+    .attachment-upload{border:1.5px dashed #D8B0B5;background:#FFF9FA;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;justify-content:space-between}
+    .attachment-thumb{width:48px;height:48px;border-radius:10px;object-fit:cover;background:#F3F4F6;flex:none;border:1px solid #F0D7DA}
+    .photo-thumb{border:0;background:transparent;padding:0;display:flex;cursor:pointer;flex:none;border-radius:10px;overflow:hidden}
+    .photo-thumb:focus-visible{outline:3px solid rgba(181,32,44,.24)}
+    .attachment-row .photo-thumb{width:38px;height:38px}
+    .attachment-row .photo-thumb .attachment-thumb{width:38px;height:38px;border-radius:9px}
+    .attachment-actions .view-photo-btn{background:var(--brand);color:#fff;border:0}
+    .image-viewer{width:min(700px,calc(100vw - 26px));max-height:calc(100vh - 26px);padding:0;overflow:hidden;background:#11151B}
+    .image-viewer-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;color:#fff;background:#1B2028}
+    .image-viewer-title{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .image-viewer .close-x{background:rgba(255,255,255,.14);color:#fff;flex:none}
+    .image-viewer .close-x svg{stroke:#fff}
+    .image-viewer-body{min-height:240px;max-height:calc(100vh - 90px);display:grid;place-items:center;padding:10px}
+    .image-viewer-body img{display:block;max-width:100%;max-height:calc(100vh - 110px);object-fit:contain;border-radius:8px}
+    .image-viewer-empty{color:#fff;font-size:13px;padding:22px;text-align:center}
+    .attachment-upload p{margin:3px 0 0;font-size:11px;line-height:1.45;color:var(--muted)}
+    .attachment-upload input{display:none}
+    .attachment-upload .soft-btn{flex:none}
+    .attachment-preview{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .attachment-preview:empty{display:none}
+    .attachment-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+    .attachment-icon{width:32px;height:32px;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;flex:none;font-size:15px;font-weight:800}
+    .attachment-meta{min-width:0;flex:1}
+    .attachment-name{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .attachment-sub{font-size:10px;color:var(--muted);margin-top:3px}
+    .attachment-remove{border:0;width:32px;height:32px;border-radius:9px;background:var(--danger-soft);color:var(--danger);font-size:16px;font-weight:800;flex:none}
+    .attachment-section{margin-top:17px;padding-top:16px;border-top:1px solid var(--line)}
+    .attachment-section .section-label{margin:0 0 10px}
+    .saved-attachments{display:flex;flex-direction:column;gap:9px}
+    .saved-attachment-card{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:13px;background:#fff}
+    .saved-attachment-card img{width:54px;height:54px;border-radius:10px;object-fit:cover;background:#F3F4F6;flex:none}
+    .saved-attachment-card .attachment-icon{width:54px;height:54px;border-radius:10px;font-size:18px}
+    .attachment-actions{display:flex;gap:7px;align-items:center;flex:none}
+    .attachment-actions a,.attachment-actions button{min-height:32px;border-radius:9px;padding:0 9px;font-size:11px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .attachment-actions a{background:var(--brand-soft);color:var(--brand-dark)}
+    .attachment-actions button{border:0;background:var(--danger-soft);color:var(--danger)}
+    .attachment-empty{font-size:12px;color:var(--muted);padding:12px;background:#FAFAFB;border-radius:12px}
+    .detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+    .danger-zone{margin-top:20px;padding-top:17px;border-top:1px solid var(--line);display:flex;justify-content:flex-end}
+
+    .toast{position:fixed;left:50%;bottom:88px;transform:translate(-50%,12px);background:#1E2024;color:#fff;border-radius:12px;padding:11px 14px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:.2s ease;z-index:40;box-shadow:0 10px 22px rgba(0,0,0,.2);max-width:calc(100vw - 32px);text-align:center}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+    .muted{color:var(--muted)}
+
+    @media (max-width:760px){
+      .app{padding:14px 13px 30px}
+      .header-actions .ghost-btn{display:none}
+      .hero{padding:20px 18px;border-radius:20px}
+      .hero-content{display:block}
+      .hero h2{font-size:22px;max-width:310px}
+      .hero .primary-btn{margin-top:15px;width:100%}
+      .stat-grid{grid-template-columns:repeat(2,1fr);gap:9px;margin:12px 0}
+      .stat-card{padding:13px}
+      .stat-number{font-size:24px}
+      .toolbar{align-items:stretch;display:block}
+      .toolbar-left{display:block}
+      .toolbar-right{margin-top:9px;display:grid;grid-template-columns:1fr 1fr}
+      .search-wrap{min-width:0}
+      .filter-select{min-width:0}
+      .record-grid{grid-template-columns:1fr;gap:10px}
+      .modal-body{padding:16px}
+      .form-grid{grid-template-columns:1fr}
+      .field.full{grid-column:auto}
+      .item-row{grid-template-columns:minmax(0,1fr)72px 38px}
+      .item-row .condition-field{display:none}
+      .detail-info{grid-template-columns:1fr 1fr;gap:8px}
+      .modal-footer{padding:12px 16px}
+      .modal-footer .ghost-btn,.modal-footer .primary-btn{flex:1}
+      .attachment-upload{align-items:flex-start;flex-direction:column}
+      .attachment-upload .soft-btn{width:100%}
+      .saved-attachment-card{align-items:flex-start}
+      .attachment-actions{flex-direction:column;align-items:stretch}
+      /* Keep every form control at 16px so iPhone/Messenger will not auto-zoom when it receives focus. */
+      input,select,textarea{font-size:16px!important}
+      .item-row .field input,.item-row .field select,.inventory-form .field input{font-size:16px!important}
+      .modal{max-height:calc(100dvh - env(safe-area-inset-top) - 8px);overscroll-behavior:contain}
+    }
+    @media (max-width:390px){
+      .brand h1{font-size:16px}.brand p{font-size:11px}
+      .topbar{gap:8px}.header-actions{gap:6px}
+      .icon-btn{width:39px;height:39px}.brand-mark{width:39px;height:39px}
+      .record-meta{gap:7px;padding:10px}
+    }
+  
+
+    /* Inventory catalog + dropdown availability */
+    .inventory-help{padding:12px 13px;background:var(--brand-soft);border:1px solid #F3D9DD;border-radius:13px;font-size:12px;line-height:1.5;color:#5E2530;margin-bottom:15px}
+    .inventory-help strong{color:var(--brand-dark)}
+    .inventory-form{display:grid;grid-template-columns:minmax(0,1.1fr)105px minmax(0,1fr) auto;gap:9px;align-items:end;padding:12px;background:#FAFAFB;border:1px solid #EFF0F2;border-radius:14px}
+    .inventory-form .field label{font-size:10px;margin-bottom:5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+    .inventory-form .field input{padding:9px 10px;font-size:13px}
+    .inventory-list{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+    .inventory-card{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+    .inventory-card-main{min-width:0;flex:1}
+    .inventory-card-title{font-size:13px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .inventory-card-sub{font-size:11px;color:var(--muted);line-height:1.4;margin-top:4px}
+    .inventory-figures{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
+    .inventory-figure{font-size:10px;font-weight:800;border-radius:999px;padding:5px 7px;background:#F3F4F6;color:#4C5158}
+    .inventory-figure.available{background:var(--success-soft);color:var(--success)}
+    .inventory-figure.out{background:var(--warning-soft);color:var(--warning)}
+    .inventory-card-actions{display:flex;gap:7px;flex:none}
+    .inventory-empty{padding:20px 14px;text-align:center;border:1px dashed #D7D9DE;border-radius:13px;background:#fff;color:var(--muted);font-size:12px;line-height:1.5}
+    .item-row{grid-template-columns:minmax(0,1.2fr)80px minmax(0,.8fr)40px}
+    .item-row .field select{padding:9px 31px 9px 10px;font-size:13px}
+    .item-availability{grid-column:1/-1;min-height:28px;padding:8px 10px;border-radius:10px;background:#F3F4F6;color:#5C6168;font-size:11px;font-weight:700;line-height:1.42}
+    .item-availability.ok{background:var(--success-soft);color:var(--success)}
+    .item-availability.warning{background:var(--warning-soft);color:var(--warning)}
+    .item-availability.empty{background:#F4F5F6;color:var(--muted)}
+    .alt-suggestion{margin:4px 0 0;border:0;border-radius:8px;background:rgba(255,255,255,.7);color:inherit;padding:5px 7px;font-size:10px;font-weight:850;cursor:pointer}
+    .alt-suggestion:hover{filter:brightness(.98)}
+    .inventory-inline-link{border:0;background:transparent;color:inherit;font-size:11px;font-weight:850;padding:0;text-decoration:underline;cursor:pointer}
+    @media (max-width:760px){
+      .header-actions .ghost-btn{display:none}
+      #openInventoryBtn{display:inline-flex!important;align-items:center;justify-content:center;width:39px;min-height:39px;padding:0;font-size:0}
+      #openInventoryBtn:before{content:"☷";font-size:19px;line-height:1}
+      .inventory-form{grid-template-columns:1fr 84px;gap:8px}
+      .inventory-form .field:nth-child(3){grid-column:1/-1}
+      .inventory-form .primary-btn{grid-column:1/-1;width:100%}
+      .inventory-card{align-items:flex-start}
+      .inventory-card-actions{flex-direction:column}
+      .item-row{grid-template-columns:minmax(0,1fr)72px 38px}
+      .item-row .condition-field{display:none}
+    }
+
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M7 7h10l1 13H6L7 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/><path d="M9 12h.01M15 12h.01"/></svg>
+        </div>
+        <div>
+          <h1>Creatives Item Tracker</h1>
+          <p>Borrowed / Returned for events</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="ghost-btn small-btn" id="openInventoryBtn" title="Add items, quantity, and alternatives">Manage inventory</button>
+        <button class="ghost-btn small-btn" id="exportBtn" title="Download CSV report">Export CSV</button>
+        <button class="icon-btn" id="clearFiltersBtn" title="Clear search and filters" aria-label="Clear filters">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18M6 6l1 14h10l1-14M9 10v6M15 10v6M10 6V4h4v2"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-content">
+        <div>
+          <h2>Collaterals Materials</h2>
+          <p>Track who borrowed each item, which event it belongs to, and what still needs to be returned after setup or egress. Records are saved on this device and browser.</p>
+        </div>
+        <button class="primary-btn" id="openAddHero">+ Add borrowed items</button>
+      </div>
+    </section>
+
+    <section class="stat-grid" aria-label="Summary">
+      <div class="stat-card">
+        <div class="stat-label"><span><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 7h18M7 3v4M17 3v4M5 11h14v9H5z"/></svg></span> Active records</div>
+        <div class="stat-number" id="statActive">0</div>
+        <div class="stat-note">Not fully returned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M7 8h10M7 12h6M5 4h14v16H5z"/></svg></span> Items out</div>
+        <div class="stat-number" id="statItemsOut">0</div>
+        <div class="stat-note">Still with borrower</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span> Overdue</div>
+        <div class="stat-number" id="statOverdue">0</div>
+        <div class="stat-note">Past expected return</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg></span> Returned</div>
+        <div class="stat-number" id="statReturned">0</div>
+        <div class="stat-note">Completed records</div>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+          <input id="searchInput" type="search" placeholder="Search event, borrower, or item..." autocomplete="off" />
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <select class="filter-select" id="statusFilter" aria-label="Filter by status">
+          <option value="all">All status</option>
+          <option value="out">Currently out</option>
+          <option value="partial">Partially returned</option>
+          <option value="overdue">Overdue</option>
+          <option value="returned">Returned</option>
+        </select>
+        <select class="filter-select" id="sortSelect" aria-label="Sort records">
+          <option value="newest">Newest first</option>
+          <option value="due">Return date</option>
+          <option value="event">Event A–Z</option>
+        </select>
+      </div>
+    </section>
+
+    <section id="recordsArea" aria-live="polite"></section>
+  </main>
+
+  <button class="fab" id="openAddFab"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Add record</button>
+
+  <div class="modal-backdrop" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <h2 class="modal-title" id="formModalTitle">Add borrowed items</h2>
+        <button class="close-x" data-close="formModal" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <form id="recordForm">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field">
+              <label for="eventName">Event / Project <span class="req">*</span></label>
+              <input id="eventName" name="eventName" placeholder="e.g. Company Year-End Party" required />
+            </div>
+            <div class="field">
+              <label for="location">Location / Venue</label>
+              <input id="location" name="location" placeholder="e.g. Solaire, Pasay" />
+            </div>
+            <div class="field">
+              <label for="borrower">Borrowed by <span class="req">*</span></label>
+              <input id="borrower" name="borrower" placeholder="Name of person / team" required />
+            </div>
+            <div class="field">
+              <label for="borrowerContact">Contact number</label>
+              <input id="borrowerContact" name="borrowerContact" type="tel" inputmode="tel" placeholder="Optional" />
+            </div>
+            <div class="field">
+              <label for="dateBorrowed">Date borrowed <span class="req">*</span></label>
+              <input id="dateBorrowed" name="dateBorrowed" type="date" required />
+            </div>
+            <div class="field">
+              <label for="dueDate">Expected return <span class="req">*</span></label>
+              <input id="dueDate" name="dueDate" type="date" required />
+            </div>
+          </div>
+
+          <div class="section-label">
+            <h3>Items borrowed <span class="req">*</span></h3>
+            <button type="button" class="soft-btn small-btn" id="addItemBtn">+ Add item</button>
+          </div>
+          <div id="itemRows"></div>
+
+          <div class="field full" style="margin-top:14px">
+            <label for="notes">Notes</label>
+            <textarea id="notes" name="notes" placeholder="Condition before borrowing, missing accessories, special reminder, etc."></textarea>
+          </div>
+
+          <div class="field full" style="margin-top:14px">
+            <label>Proof photo / attachments <span class="req">*</span></label>
+            <div class="attachment-upload">
+              <div>
+                <strong style="font-size:13px">Add photo proof or reference</strong>
+                <p>Required: at least 1 photo of the item, handover, or borrower. You may add receipts/documents too. Up to 5 files, max 3 MB (3,072 KB) bawat isa. Best format: JPG, PNG, or WEBP.</p>
+              </div>
+              <label class="soft-btn small-btn" for="attachmentInput">+ Add photo / file</label>
+              <input id="attachmentInput" type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" />
+            </div>
+            <div class="attachment-preview" id="attachmentPreview"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="ghost-btn" data-close="formModal">Cancel</button>
+          <button type="submit" class="primary-btn">Save record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <div class="modal-backdrop" id="inventoryModal" role="dialog" aria-modal="true" aria-labelledby="inventoryModalTitle">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <h2 class="modal-title" id="inventoryModalTitle">Manage inventory</h2>
+        <button class="close-x" data-close="inventoryModal" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="inventory-help"><strong>Set up your borrowable items here.</strong> The dropdown in Add Record will show the remaining quantity automatically. Add alternatives as item names separated by commas, for example: <em>LED Light, Softbox Light</em>.</div>
+        <form id="inventoryForm" class="inventory-form">
+          <div class="field">
+            <label for="inventoryName">Item name <span class="req">*</span></label>
+            <input id="inventoryName" placeholder="e.g. Ring light" required />
+          </div>
+          <div class="field">
+            <label for="inventoryQty">Total qty <span class="req">*</span></label>
+            <input id="inventoryQty" type="number" min="0" step="1" value="1" required />
+          </div>
+          <div class="field">
+            <label for="inventoryAlternatives">Alternatives</label>
+            <input id="inventoryAlternatives" placeholder="e.g. LED Light, Softbox Light" />
+          </div>
+          <button type="submit" class="primary-btn" id="inventorySaveBtn">Add item</button>
+        </form>
+        <div class="inventory-list" id="inventoryList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <h2 class="modal-title" id="detailModalTitle">Record details</h2>
+        <button class="close-x" data-close="detailModal" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="detailContent"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="imageViewerModal" role="dialog" aria-modal="true" aria-labelledby="imageViewerTitle">
+    <div class="modal image-viewer" role="document">
+      <div class="image-viewer-header">
+        <div class="image-viewer-title" id="imageViewerTitle">Photo preview</div>
+        <button class="close-x" type="button" data-close="imageViewerModal" aria-label="Close photo preview">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="image-viewer-body" id="imageViewerBody"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'borrowedReturnedTracker.v1';
+    const INVENTORY_STORAGE_KEY = 'borrowedReturnedTracker.inventory.v1';
+    const ATTACHMENT_DB_NAME = 'borrowedReturnedTrackerAttachments';
+    const ATTACHMENT_STORE = 'attachments';
+    const MAX_ATTACHMENTS = 5;
+    const MAX_ATTACHMENT_SIZE = 3 * 1024 * 1024;
+    let records = [];
+    let inventory = [];
+    let inventoryEditingId = null;
+    let pendingAttachments = [];
+    let attachmentDbPromise = null;
+    let activeRecordId = null;
+    let attachmentCache = new Map();
+    let renderedAttachmentUrls = [];
+    let viewerUrl = null;
+    let viewerRequestToken = 0;
+    let toastTimer = null;
+    let deleteArmedId = null;
+    let deleteConfirmTimer = null;
+
+    const resolveRoot = (root = document) => typeof root === 'string' ? document.querySelector(root) : root;
+    const $ = (selector, root = document) => resolveRoot(root)?.querySelector(selector) || null;
+    const $$ = (selector, root = document) => {
+      const target = resolveRoot(root);
+      return target ? [...target.querySelectorAll(selector)] : [];
+    };
+    const todayISO = () => new Date().toISOString().slice(0,10);
+    const safe = (value = '') => String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    const uid = () => `REC-${Date.now().toString().slice(-7)}-${Math.random().toString(36).slice(2,5).toUpperCase()}`;
+    const attachmentId = () => `ATT-${Date.now().toString().slice(-7)}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+    const formatBytes = (bytes=0) => {
+      if(!bytes) return '0 KB';
+      const units = ['B','KB','MB','GB'];
+      const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+      const value = bytes / Math.pow(1024, index);
+      return `${value >= 10 || index === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[index]}`;
+    };
+    const attachmentSymbol = (type='') => type.startsWith('image/') ? '▣' : type.includes('pdf') ? 'PDF' : type.includes('word') || type.includes('document') ? 'DOC' : type.includes('sheet') || type.includes('excel') ? 'XLS' : 'FILE';
+    const isImage = (attachment) => {
+      const type = String(attachment?.type || '');
+      const name = String(attachment?.name || '');
+      return type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|avif|heic|heif)$/i.test(name);
+    };
+    const makeAttachmentUrl = (blob) => {
+      const url = URL.createObjectURL(blob);
+      renderedAttachmentUrls.push(url);
+      return url;
+    };
+    function clearRenderedAttachmentUrls(){
+      renderedAttachmentUrls.forEach(url => URL.revokeObjectURL(url));
+      renderedAttachmentUrls = [];
+    }
+    function blobToDataUrl(blob){
+      return new Promise((resolve, reject) => {
+        if(!blob){ reject(new Error('No photo data found.')); return; }
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('Unable to read this photo.'));
+        reader.readAsDataURL(blob);
+      });
+    }
+    async function getImageSource(attachment){
+      if(attachment?.dataUrl) return attachment.dataUrl;
+      if(attachment?.blob){
+        try { return await blobToDataUrl(attachment.blob); }
+        catch(error){ console.warn('Unable to prepare photo preview:', error); }
+      }
+      return '';
+    }
+    async function showImageViewer(attachment){
+      const token = ++viewerRequestToken;
+      const body = $('#imageViewerBody');
+      if(!body) return;
+      if(viewerUrl){ URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
+      $('#imageViewerTitle').textContent = attachment?.name || 'Photo preview';
+      body.innerHTML = '<div class="image-viewer-empty">Loading photo…</div>';
+      openModal('imageViewerModal');
+
+      const source = await getImageSource(attachment);
+      if(token !== viewerRequestToken) return;
+      if(!source){
+        body.innerHTML = '<div class="image-viewer-empty">Hindi ma-preview ang photo. Try attaching it again using JPG, PNG, or WEBP.</div>';
+        return;
+      }
+
+      const image = new Image();
+      image.alt = attachment?.name || 'Attached photo';
+      image.onload = () => {
+        if(token !== viewerRequestToken) return;
+        body.replaceChildren(image);
+      };
+      image.onerror = () => {
+        if(token !== viewerRequestToken) return;
+        body.innerHTML = '<div class="image-viewer-empty">Hindi ma-preview ang photo. Try attaching it again using JPG, PNG, or WEBP.</div>';
+      };
+      image.src = source;
+    }
+    function closeImageViewer(){
+      viewerRequestToken++;
+      closeModal('imageViewerModal');
+      const body = $('#imageViewerBody');
+      if(body) body.innerHTML = '';
+      if(viewerUrl){ URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
+    }
+
+    function openAttachmentDb(){
+      if(attachmentDbPromise) return attachmentDbPromise;
+      attachmentDbPromise = new Promise((resolve, reject) => {
+        if(!('indexedDB' in window)){ reject(new Error('IndexedDB is not supported in this browser.')); return; }
+        const request = indexedDB.open(ATTACHMENT_DB_NAME, 1);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          const store = db.createObjectStore(ATTACHMENT_STORE, {keyPath:'id'});
+          store.createIndex('recordId', 'recordId', {unique:false});
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error('Unable to open attachment storage.'));
+      });
+      return attachmentDbPromise;
+    }
+    async function saveAttachments(recordId, files){
+      if(!files?.length) return 0;
+      const db = await openAttachmentDb();
+      // Photos are saved as a data URL. This is more reliable for previews on mobile/file browsers
+      // than reopening a Blob URL after the record has been saved.
+      const data = await Promise.all(files.map(async file => {
+        const image = isImage(file);
+        return {
+          id: attachmentId(),
+          recordId,
+          name:file.name,
+          type:file.type || 'application/octet-stream',
+          size:file.size,
+          blob:image ? null : file,
+          dataUrl:image ? await blobToDataUrl(file) : '',
+          createdAt:new Date().toISOString()
+        };
+      }));
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(ATTACHMENT_STORE, 'readwrite');
+        const store = tx.objectStore(ATTACHMENT_STORE);
+        data.forEach(item => store.put(item));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error('Unable to save attachment.'));
+        tx.onabort = () => reject(tx.error || new Error('Attachment storage was aborted.'));
+      });
+      return data.length;
+    }
+    async function getAttachments(recordId){
+      try{
+        const db = await openAttachmentDb();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction(ATTACHMENT_STORE, 'readonly');
+          const index = tx.objectStore(ATTACHMENT_STORE).index('recordId');
+          const request = index.getAll(recordId);
+          request.onsuccess = () => resolve(request.result || []);
+          request.onerror = () => reject(request.error || new Error('Unable to read attachments.'));
+        });
+      } catch(error){
+        console.warn('Unable to read attachments:', error);
+        return [];
+      }
+    }
+    async function deleteAttachmentById(id){
+      const db = await openAttachmentDb();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(ATTACHMENT_STORE, 'readwrite');
+        tx.objectStore(ATTACHMENT_STORE).delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error('Unable to delete attachment.'));
+      });
+    }
+    async function deleteAttachmentsForRecord(recordId){
+      try{
+        const attachments = await getAttachments(recordId);
+        if(!attachments.length) return;
+        const db = await openAttachmentDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(ATTACHMENT_STORE, 'readwrite');
+          const store = tx.objectStore(ATTACHMENT_STORE);
+          attachments.forEach(item => store.delete(item.id));
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error || new Error('Unable to delete attachments.'));
+        });
+      } catch(error){ console.warn('Unable to delete record attachments:', error); }
+    }
+
+
+
+    const inventoryUid = () => `INV-${Date.now().toString().slice(-7)}-${Math.random().toString(36).slice(2,5).toUpperCase()}`;
+    const cleanItemName = (value='') => String(value).trim().toLocaleLowerCase();
+    const normalizeAlternatives = (value='') => Array.isArray(value)
+      ? value.map(name => String(name).trim()).filter(Boolean)
+      : String(value).split(',').map(name => name.trim()).filter(Boolean);
+
+    function normalizeInventoryItem(item={}){
+      return {
+        id: item.id || inventoryUid(),
+        name: String(item.name || '').trim(),
+        totalQty: Math.max(0, Number(item.totalQty ?? item.qty ?? 0) || 0),
+        alternatives: normalizeAlternatives(item.alternatives || ''),
+        createdAt: item.createdAt || new Date().toISOString()
+      };
+    }
+    function loadInventory(){
+      try{
+        const stored = localStorage.getItem(INVENTORY_STORAGE_KEY);
+        inventory = stored ? JSON.parse(stored).map(normalizeInventoryItem).filter(item => item.name) : [];
+        if(!Array.isArray(inventory)) inventory = [];
+      } catch(error){
+        inventory = [];
+        console.warn('Unable to read saved inventory:', error);
+      }
+    }
+    function saveInventory(){
+      try{
+        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+        return true;
+      } catch(error){
+        console.error('Unable to save inventory:', error);
+        showToast('Hindi ma-save ang inventory sa browser. Open the file in Chrome or Safari, not preview mode.');
+        return false;
+      }
+    }
+    function inventoryItemFor(value=''){
+      const key = String(value || '');
+      const name = cleanItemName(value);
+      return inventory.find(item => item.id === key) || inventory.find(item => cleanItemName(item.name) === name) || null;
+    }
+    function recordItemMatchesInventory(recordItem, inventoryItem){
+      if(!recordItem || !inventoryItem) return false;
+      return recordItem.inventoryId === inventoryItem.id || (!recordItem.inventoryId && cleanItemName(recordItem.name) === cleanItemName(inventoryItem.name));
+    }
+    function inventoryOutQty(inventoryItem){
+      if(!inventoryItem) return 0;
+      return records.reduce((total, record) => total + record.items.reduce((sum, recordItem) => {
+        if(!recordItemMatchesInventory(recordItem, inventoryItem)) return sum;
+        return sum + Math.max(0, Number(recordItem.qty || 0) - Number(recordItem.returnedQty || 0));
+      }, 0), 0);
+    }
+    function inventoryAvailableQty(inventoryItem){
+      return Math.max(0, Number(inventoryItem?.totalQty || 0) - inventoryOutQty(inventoryItem));
+    }
+    function alternativeItemsFor(inventoryItem){
+      if(!inventoryItem) return [];
+      return normalizeAlternatives(inventoryItem.alternatives).map(name => inventoryItemFor(name)).filter(Boolean)
+        .filter((item, index, list) => item.id !== inventoryItem.id && list.findIndex(other => other.id === item.id) === index)
+        .filter(item => inventoryAvailableQty(item) > 0);
+    }
+    function pendingAllocationFor(itemId, excludedRow=null){
+      return $$('.item-row', '#itemRows').reduce((total, row) => {
+        if(row === excludedRow) return total;
+        const select = $('.item-select', row);
+        const qty = Number($('.item-qty', row)?.value || 0);
+        return total + (select?.value === itemId ? Math.max(0, qty) : 0);
+      }, 0);
+    }
+    function selectOptions(selectedId='', includeUnavailable=true){
+      if(!inventory.length) return '<option value="">No inventory set up yet</option>';
+      const options = inventory.slice().sort((a,b) => a.name.localeCompare(b.name)).map(item => {
+        const available = inventoryAvailableQty(item);
+        const state = available > 0 ? `${available} available` : 'currently out';
+        const selected = item.id === selectedId ? ' selected' : '';
+        const disabled = !includeUnavailable && available <= 0 && item.id !== selectedId ? ' disabled' : '';
+        return `<option value="${safe(item.id)}"${selected}${disabled}>${safe(item.name)} — ${state}</option>`;
+      }).join('');
+      return `<option value="">Select an item from inventory…</option>${options}`;
+    }
+    function selectedInventoryItem(row){
+      const select = $('.item-select', row);
+      return select ? inventoryItemFor(select.value) : null;
+    }
+    function refreshItemRowStatuses(){
+      $$('.item-row', '#itemRows').forEach(row => {
+        const select = $('.item-select', row);
+        const qtyInput = $('.item-qty', row);
+        const status = $('[data-item-status]', row);
+        if(!select || !qtyInput || !status) return;
+        const previous = select.value;
+        select.innerHTML = selectOptions(previous, true);
+        const item = selectedInventoryItem(row);
+        if(!inventory.length){
+          status.className = 'item-availability empty';
+          status.innerHTML = 'Wala pang item sa inventory. <button type="button" class="inventory-inline-link" data-open-inventory-from-row>Set up inventory</button>';
+          qtyInput.removeAttribute('max');
+          return;
+        }
+        if(!item){
+          status.className = 'item-availability empty';
+          status.textContent = 'Select an item first. The remaining quantity will appear here.';
+          qtyInput.removeAttribute('max');
+          return;
+        }
+        const totalAvailable = inventoryAvailableQty(item);
+        const availableForThisRow = Math.max(0, totalAvailable - pendingAllocationFor(item.id, row));
+        const requested = Math.max(0, Number(qtyInput.value || 0));
+        qtyInput.max = availableForThisRow > 0 ? String(availableForThisRow) : '0';
+        const alternatives = alternativeItemsFor(item);
+        const alternativeButtons = alternatives.map(alt => `<button type="button" class="alt-suggestion" data-alt-select="${safe(alt.id)}">Use ${safe(alt.name)} (${inventoryAvailableQty(alt)} available)</button>`).join(' ');
+        if(availableForThisRow <= 0){
+          status.className = 'item-availability warning';
+          status.innerHTML = `${safe(item.name)} is currently all out.${alternatives.length ? `<br>Available alternative${alternatives.length > 1 ? 's' : ''}: ${alternativeButtons}` : '<br>No available alternative is listed yet. Update this in Manage inventory.'}`;
+        } else if(requested > availableForThisRow){
+          status.className = 'item-availability warning';
+          status.innerHTML = `Only <strong>${availableForThisRow}</strong> available for this request. Please lower the quantity.${alternatives.length ? `<br>Alternative${alternatives.length > 1 ? 's' : ''}: ${alternativeButtons}` : ''}`;
+        } else {
+          status.className = 'item-availability ok';
+          status.innerHTML = `<strong>${availableForThisRow}</strong> available now (${inventoryOutQty(item)} currently out of ${item.totalQty}).${alternatives.length ? `<br>Alternative${alternatives.length > 1 ? 's' : ''}: ${alternatives.map(alt => `${safe(alt.name)} (${inventoryAvailableQty(alt)})`).join(', ')}` : ''}`;
+        }
+      });
+      $$('[data-open-inventory-from-row]', '#itemRows').forEach(button => button.addEventListener('click', openInventory));
+      $$('[data-alt-select]', '#itemRows').forEach(button => button.addEventListener('click', () => {
+        const row = button.closest('.item-row');
+        const select = $('.item-select', row);
+        if(select){ select.value = button.dataset.altSelect; refreshItemRowStatuses(); }
+      }));
+    }
+    function shouldAutoFocus(){
+      return window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    }
+    function openInventory(){
+      renderInventoryList();
+      openModal('inventoryModal');
+      if(shouldAutoFocus()) setTimeout(() => $('#inventoryName')?.focus(), 120);
+    }
+    function resetInventoryForm(){
+      inventoryEditingId = null;
+      $('#inventoryForm')?.reset();
+      if($('#inventoryQty')) $('#inventoryQty').value = 1;
+      if($('#inventorySaveBtn')) $('#inventorySaveBtn').textContent = 'Add item';
+    }
+    function renderInventoryList(){
+      const container = $('#inventoryList');
+      if(!container) return;
+      if(!inventory.length){
+        container.innerHTML = '<div class="inventory-empty">Wala pang inventory item. Add the items that can be borrowed, then set the total quantity you actually have.</div>';
+        return;
+      }
+      container.innerHTML = inventory.slice().sort((a,b) => a.name.localeCompare(b.name)).map(item => {
+        const out = inventoryOutQty(item);
+        const available = inventoryAvailableQty(item);
+        const alternatives = normalizeAlternatives(item.alternatives);
+        return `<article class="inventory-card">
+          <div class="inventory-card-main">
+            <div class="inventory-card-title">${safe(item.name)}</div>
+            <div class="inventory-figures"><span class="inventory-figure">Total: ${item.totalQty}</span><span class="inventory-figure ${available > 0 ? 'available' : 'out'}">Available: ${available}</span><span class="inventory-figure ${out > 0 ? 'out' : ''}">Out: ${out}</span></div>
+            <div class="inventory-card-sub">${alternatives.length ? `Alternatives: ${safe(alternatives.join(', '))}` : 'No alternative item set'}</div>
+          </div>
+          <div class="inventory-card-actions"><button type="button" class="soft-btn small-btn" data-inventory-edit="${safe(item.id)}">Edit</button><button type="button" class="danger-btn small-btn" data-inventory-delete="${safe(item.id)}">Delete</button></div>
+        </article>`;
+      }).join('');
+      $$('[data-inventory-edit]', container).forEach(button => button.addEventListener('click', () => {
+        const item = inventory.find(entry => entry.id === button.dataset.inventoryEdit);
+        if(!item) return;
+        inventoryEditingId = item.id;
+        $('#inventoryName').value = item.name;
+        $('#inventoryQty').value = item.totalQty;
+        $('#inventoryAlternatives').value = item.alternatives.join(', ');
+        $('#inventorySaveBtn').textContent = 'Update item';
+        $('#inventoryName').focus();
+      }));
+      $$('[data-inventory-delete]', container).forEach(button => button.addEventListener('click', () => {
+        const item = inventory.find(entry => entry.id === button.dataset.inventoryDelete);
+        if(!item) return;
+        if(inventoryOutQty(item) > 0){ showToast(`Cannot delete ${item.name}: ${inventoryOutQty(item)} item(s) are still out.`); return; }
+        inventory = inventory.filter(entry => entry.id !== item.id);
+        if(!saveInventory()) return;
+        renderInventoryList();
+        refreshItemRowStatuses();
+        showToast('Inventory item deleted.');
+      }));
+    }
+    function saveInventoryItem(event){
+      event.preventDefault();
+      const name = $('#inventoryName').value.trim();
+      const totalQty = Math.max(0, Number($('#inventoryQty').value || 0));
+      const alternatives = normalizeAlternatives($('#inventoryAlternatives').value);
+      if(!name){ showToast('Please enter an inventory item name.'); $('#inventoryName').focus(); return; }
+      const duplicate = inventory.find(item => cleanItemName(item.name) === cleanItemName(name) && item.id !== inventoryEditingId);
+      if(duplicate){ showToast('That item is already in your inventory list.'); $('#inventoryName').focus(); return; }
+      const wasEditingInventory = Boolean(inventoryEditingId);
+      if(inventoryEditingId){
+        const item = inventory.find(entry => entry.id === inventoryEditingId);
+        if(!item) return;
+        const currentlyOut = inventoryOutQty(item);
+        if(totalQty < currentlyOut){ showToast(`Total quantity cannot be below ${currentlyOut}, because that many are still out.`); return; }
+        item.name = name;
+        item.totalQty = totalQty;
+        item.alternatives = alternatives;
+        // Keep historical records linked to this item and update their labels for clarity.
+        records.forEach(record => record.items.forEach(recordItem => {
+          if(recordItem.inventoryId === item.id) recordItem.name = name;
+        }));
+        saveRecords();
+      } else {
+        inventory.push({id:inventoryUid(), name, totalQty, alternatives, createdAt:new Date().toISOString()});
+      }
+      if(!saveInventory()) return;
+      resetInventoryForm();
+      renderInventoryList();
+      renderRecords();
+      refreshItemRowStatuses();
+      showToast(wasEditingInventory ? 'Inventory updated.' : 'Item added to inventory.');
+    }
+
+
+    function loadRecords(){
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        records = stored ? JSON.parse(stored) : [];
+        if(!Array.isArray(records)) records = [];
+      } catch(e){
+        records = [];
+        console.warn('Unable to read saved records:', e);
+      }
+    }
+    function saveRecords(){
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        return true;
+      } catch(e){
+        console.error('Unable to save records:', e);
+        showToast('Hindi ma-save sa browser. Open the file in Chrome or Safari, not preview mode.');
+        return false;
+      }
+    }
+
+    function normalizeDate(date){
+      if(!date) return '';
+      const d = new Date(`${date}T00:00:00`);
+      return isNaN(d) ? '' : d.toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'});
+    }
+    function getStatus(record){
+      const total = record.items.reduce((n,i)=>n+Number(i.qty||0),0);
+      const returned = record.items.reduce((n,i)=>n+Number(i.returnedQty||0),0);
+      if(total > 0 && returned >= total) return 'returned';
+      if(returned > 0) return 'partial';
+      if(record.dueDate && record.dueDate < todayISO()) return 'overdue';
+      return 'out';
+    }
+    function statusLabel(status){ return ({out:'Currently out', partial:'Partially returned', overdue:'Overdue', returned:'Returned'})[status] || status; }
+    function statusClass(status){ return ({out:'status-out',partial:'status-partial',overdue:'status-overdue',returned:'status-returned'})[status] || ''; }
+    function outQty(record){ return record.items.reduce((sum,item)=>sum + Math.max(0,Number(item.qty||0)-Number(item.returnedQty||0)),0); }
+
+    function refreshStats(){
+      const stats = records.reduce((acc, r)=>{
+        const status = getStatus(r);
+        if(status !== 'returned') acc.active++;
+        if(status === 'returned') acc.returned++;
+        if(status === 'overdue') acc.overdue++;
+        acc.itemsOut += outQty(r);
+        return acc;
+      },{active:0,returned:0,overdue:0,itemsOut:0});
+      $('#statActive').textContent = stats.active;
+      $('#statItemsOut').textContent = stats.itemsOut;
+      $('#statOverdue').textContent = stats.overdue;
+      $('#statReturned').textContent = stats.returned;
+    }
+
+    function getFilteredRecords(){
+      const search = $('#searchInput').value.trim().toLowerCase();
+      const statusFilter = $('#statusFilter').value;
+      const sort = $('#sortSelect').value;
+      let list = records.filter(record => {
+        const haystack = [record.eventName,record.location,record.borrower,record.borrowerContact,record.notes,...record.items.map(i=>i.name)].join(' ').toLowerCase();
+        const status = getStatus(record);
+        return (!search || haystack.includes(search)) && (statusFilter === 'all' || status === statusFilter);
+      });
+      list.sort((a,b)=>{
+        if(sort==='event') return a.eventName.localeCompare(b.eventName);
+        if(sort==='due') return (a.dueDate || '9999-12-31').localeCompare(b.dueDate || '9999-12-31');
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      });
+      return list;
+    }
+
+    function renderRecords(){
+      refreshStats();
+      const area = $('#recordsArea');
+      const list = getFilteredRecords();
+      if(!list.length){
+        const noData = records.length === 0;
+        area.innerHTML = `<div class="empty">
+          <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M7 7h10l1 13H6L7 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg></div>
+          <h3>${noData ? 'Wala pang record.' : 'No matching records.'}</h3>
+          <p>${noData ? 'Add the first borrowed item before your event starts, para malinaw kung kanino napunta ang gamit.' : 'Try changing your search or filter.'}</p>
+          ${noData ? '<button class="primary-btn" id="emptyAddBtn">+ Add first record</button>' : '<button class="ghost-btn" id="resetSearchBtn">Reset filters</button>'}
+        </div>`;
+        $('#emptyAddBtn')?.addEventListener('click', openForm);
+        $('#resetSearchBtn')?.addEventListener('click', clearFilters);
+        return;
+      }
+      area.innerHTML = `<div class="record-grid">${list.map(recordCard).join('')}</div>`;
+      $$('.view-record').forEach(btn => btn.addEventListener('click', () => openDetails(btn.dataset.id)));
+      $$('.quick-return').forEach(btn => btn.addEventListener('click', () => openDetails(btn.dataset.id, true)));
+    }
+
+    function recordCard(record){
+      const status = getStatus(record);
+      const chips = record.items.slice(0,3).map(i=>`<span class="item-chip">${safe(i.name)} × ${i.qty}</span>`).join('');
+      const more = record.items.length > 3 ? `<span class="item-chip">+${record.items.length-3} more</span>` : '';
+      const dueDisplay = record.dueDate ? `Return: ${normalizeDate(record.dueDate)}` : 'No return date set';
+      const footerBtn = status !== 'returned' ? `<button class="soft-btn small-btn quick-return" data-id="${record.id}">Update return</button>` : `<button class="soft-btn small-btn view-record" data-id="${record.id}">View details</button>`;
+      return `<article class="record-card">
+        <div class="record-head">
+          <div>
+            <h3 class="record-event">${safe(record.eventName)}</h3>
+            <div class="record-id">${safe(record.id)}</div>
+          </div>
+          <span class="status-pill ${statusClass(status)}">${statusLabel(status)}</span>
+        </div>
+        <div class="record-meta">
+          <div><div class="meta-label">Borrowed by</div><div class="meta-value">${safe(record.borrower)}</div></div>
+          <div><div class="meta-label">Venue</div><div class="meta-value">${safe(record.location || '—')}</div></div>
+          <div><div class="meta-label">Date out</div><div class="meta-value">${normalizeDate(record.dateBorrowed)}</div></div>
+          <div><div class="meta-label">Still out</div><div class="meta-value">${outQty(record)} item${outQty(record)===1?'':'s'}</div></div>
+        </div>
+        <div class="items-preview">
+          <div class="items-top"><span class="items-label">Items borrowed</span><span class="muted" style="font-size:11px;font-weight:700">${record.items.length} line${record.items.length===1?'':'s'}${Number(record.attachmentCount||0) ? ` · ${Number(record.attachmentCount)} file${Number(record.attachmentCount)===1?'':'s'}` : ''}</span></div>
+          <div class="item-chips">${chips}${more}</div>
+        </div>
+        <div class="record-footer">
+          <span class="due-text">${safe(dueDisplay)}</span>
+          <div class="record-actions">
+            <button class="ghost-btn small-btn view-record" data-id="${record.id}">View</button>
+            ${footerBtn}
+          </div>
+        </div>
+      </article>`;
+    }
+
+    function openModal(id){ $('#'+id).classList.add('open'); document.body.style.overflow='hidden'; }
+    function closeModal(id){
+      $('#'+id).classList.remove('open');
+      if(id === 'detailModal'){ clearRenderedAttachmentUrls(); attachmentCache = new Map(); }
+      if(!$('.modal-backdrop.open')) document.body.style.overflow='';
+    }
+    function showToast(message){
+      const toast = $('#toast'); toast.textContent = message; toast.classList.add('show');
+      clearTimeout(toastTimer); toastTimer = setTimeout(()=>toast.classList.remove('show'),2500);
+    }
+
+    function renderAttachmentPreview(){
+      const preview = $('#attachmentPreview');
+      if(!preview) return;
+      const previousUrls = preview.dataset.urls ? preview.dataset.urls.split('|').filter(Boolean) : [];
+      previousUrls.forEach(url => URL.revokeObjectURL(url));
+      const localUrls = [];
+      preview.innerHTML = pendingAttachments.map((file, index) => {
+        const image = isImage(file);
+        const url = image ? URL.createObjectURL(file) : '';
+        if(url) localUrls.push(url);
+        const visual = image
+          ? `<button type="button" class="photo-thumb" data-pending-view="${index}" aria-label="View ${safe(file.name)}"><img class="attachment-thumb" src="${url}" alt="${safe(file.name)}" /></button>`
+          : `<div class="attachment-icon">${attachmentSymbol(file.type)}</div>`;
+        return `<div class="attachment-row">
+          ${visual}
+          <div class="attachment-meta"><div class="attachment-name">${safe(file.name)}</div><div class="attachment-sub">${formatBytes(file.size)}${image ? ' · Tap photo to preview' : ''}</div></div>
+          <button type="button" class="attachment-remove" data-pending-index="${index}" aria-label="Remove ${safe(file.name)}">×</button>
+        </div>`;
+      }).join('');
+      preview.dataset.urls = localUrls.join('|');
+      $$('[data-pending-index]', preview).forEach(button => button.addEventListener('click', () => {
+        pendingAttachments.splice(Number(button.dataset.pendingIndex), 1);
+        renderAttachmentPreview();
+      }));
+      $$('[data-pending-view]', preview).forEach(button => button.addEventListener('click', () => {
+        const file = pendingAttachments[Number(button.dataset.pendingView)];
+        if(file) showImageViewer({name:file.name, type:file.type, blob:file});
+      }));
+    }
+    function addPendingAttachments(fileList){
+      const files = [...fileList];
+      const remainingSlots = MAX_ATTACHMENTS - pendingAttachments.length;
+      if(remainingSlots <= 0){ showToast(`Maximum of ${MAX_ATTACHMENTS} attachments per record.`); return; }
+      const valid = [];
+      let skippedLarge = 0;
+      files.slice(0, remainingSlots).forEach(file => {
+        if(file.size > MAX_ATTACHMENT_SIZE){ skippedLarge++; return; }
+        valid.push(file);
+      });
+      pendingAttachments.push(...valid);
+      renderAttachmentPreview();
+      if(skippedLarge) showToast(`Skipped ${skippedLarge} file(s): max ${formatBytes(MAX_ATTACHMENT_SIZE)} (3,072 KB) each.`);
+      else if(files.length > remainingSlots) showToast(`Only ${remainingSlots} attachment slot(s) left.`);
+    }
+
+    async function renderSavedAttachments(record){
+      const container = $('#savedAttachments');
+      if(!container) return;
+      clearRenderedAttachmentUrls();
+      attachmentCache = new Map();
+      container.innerHTML = '<div class="attachment-empty">Loading attachments…</div>';
+      const attachments = await getAttachments(record.id);
+      if(!attachments.length){
+        container.innerHTML = '<div class="attachment-empty">No attachments saved for this record.</div>';
+        return;
+      }
+      const preparedAttachments = await Promise.all(attachments.map(async attachment => ({
+        ...attachment,
+        previewSrc: isImage(attachment) ? await getImageSource(attachment) : ''
+      })));
+      preparedAttachments.forEach(attachment => attachmentCache.set(attachment.id, attachment));
+      container.innerHTML = preparedAttachments.map(attachment => {
+        const image = isImage(attachment);
+        const url = image ? attachment.previewSrc : '';
+        const preview = image && url
+          ? `<button type="button" class="photo-thumb" data-attachment-view="${attachment.id}" aria-label="View ${safe(attachment.name)}"><img src="${url}" alt="${safe(attachment.name)}" /></button>`
+          : `<div class="attachment-icon">${attachmentSymbol(attachment.type)}</div>`;
+        const openAction = image
+          ? `<button type="button" class="view-photo-btn" data-attachment-view="${attachment.id}">View photo</button>`
+          : `<button type="button" class="soft-btn" data-attachment-open="${attachment.id}">Open file</button>`;
+        return `<div class="saved-attachment-card">
+          ${preview}
+          <div class="attachment-meta"><div class="attachment-name">${safe(attachment.name)}</div><div class="attachment-sub">${formatBytes(attachment.size)} · Added ${normalizeDate((attachment.createdAt || '').slice(0,10)) || 'today'}${image ? ' · Tap photo to preview' : ''}</div></div>
+          <div class="attachment-actions">
+            ${openAction}
+            <button type="button" data-attachment-delete="${attachment.id}">Remove</button>
+          </div>
+        </div>`;
+      }).join('');
+      $$('[data-attachment-view]', container).forEach(button => button.addEventListener('click', () => {
+        const attachment = attachmentCache.get(button.dataset.attachmentView);
+        if(attachment) showImageViewer(attachment);
+      }));
+      $$('[data-attachment-open]', container).forEach(button => button.addEventListener('click', () => {
+        const attachment = attachmentCache.get(button.dataset.attachmentOpen);
+        const url = attachment?.dataUrl || (attachment?.blob ? URL.createObjectURL(attachment.blob) : '');
+        if(!url) return;
+        const opened = window.open(url, '_blank', 'noopener');
+        if(!opened) showToast('Allow pop-ups to open this file.');
+        if(attachment?.blob && !attachment?.dataUrl) setTimeout(() => URL.revokeObjectURL(url), 30000);
+      }));
+      $$('[data-attachment-delete]', container).forEach(button => button.addEventListener('click', async () => {
+        const id = button.dataset.attachmentDelete;
+        const current = records.find(r => r.id === activeRecordId);
+        if(!current) return;
+        button.disabled = true;
+        try{
+          await deleteAttachmentById(id);
+          current.attachmentCount = Math.max(0, Number(current.attachmentCount || 0) - 1);
+          saveRecords();
+          renderRecords();
+          renderSavedAttachments(current);
+          showToast('Attachment removed.');
+        } catch(error){
+          console.error(error);
+          button.disabled = false;
+          showToast('Hindi na-delete ang attachment. Try again.');
+        }
+      }));
+    }
+    function addItemRow(item={inventoryId:'',name:'',qty:1,condition:''}){
+      const selected = item.inventoryId || inventoryItemFor(item.name)?.id || '';
+      const row = document.createElement('div'); row.className='item-row';
+      row.innerHTML = `
+        <div class="field"><label>Item name</label><select class="item-select" required>${selectOptions(selected, true)}</select></div>
+        <div class="field"><label>Qty</label><input class="item-qty" type="number" min="1" step="1" value="${Math.max(1, Number(item.qty)||1)}" required></div>
+        <div class="field condition-field"><label>Condition out</label><input class="item-condition" placeholder="Good / with case" value="${safe(item.condition||'')}"></div>
+        <button type="button" class="remove-item" title="Remove item" aria-label="Remove item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18M8 6v-2h8v2M9 10v6M15 10v6M6 6l1 14h10l1-14"/></svg></button>
+        <div class="item-availability" data-item-status></div>`;
+      $('.remove-item', row).addEventListener('click', ()=>{
+        if($$('.item-row','#itemRows').length === 1){ showToast('At least one item is required.'); return; }
+        row.remove();
+        refreshItemRowStatuses();
+      });
+      $('.item-select', row).addEventListener('change', refreshItemRowStatuses);
+      $('.item-qty', row).addEventListener('input', refreshItemRowStatuses);
+      $('#itemRows').appendChild(row);
+      refreshItemRowStatuses();
+    }
+
+    function syncDueDateMin(){
+      const borrowed = $('#dateBorrowed');
+      const due = $('#dueDate');
+      if(!borrowed || !due) return;
+      due.min = borrowed.value || '';
+      if(due.value && borrowed.value && due.value < borrowed.value) due.value = borrowed.value;
+    }
+
+    function resetForm(){
+      $('#recordForm').reset();
+      pendingAttachments = [];
+      const attachmentPreview = $('#attachmentPreview');
+      if(attachmentPreview){
+        (attachmentPreview.dataset.urls || '').split('|').filter(Boolean).forEach(url => URL.revokeObjectURL(url));
+        attachmentPreview.dataset.urls = '';
+        attachmentPreview.innerHTML = '';
+      }
+      $('#dateBorrowed').value = todayISO();
+      syncDueDateMin();
+      $('#itemRows').innerHTML='';
+      addItemRow();
+      refreshItemRowStatuses();
+    }
+    function openForm(){ resetForm(); openModal('formModal'); if(shouldAutoFocus()) $('#eventName').focus(); }
+
+    function openDetails(id, focusReturn=false){
+      const record = records.find(r=>r.id===id); if(!record) return;
+      activeRecordId = id;
+      deleteArmedId = null;
+      clearTimeout(deleteConfirmTimer);
+      const status = getStatus(record);
+      const itemRows = record.items.map((item,index)=>{
+        const remaining = Math.max(0,Number(item.qty)-Number(item.returnedQty||0));
+        return `<div class="return-row">
+          <div><div class="return-item-name">${safe(item.name)}</div><div class="return-item-sub">Out: ${item.qty} · Returned: ${item.returnedQty||0}${item.condition ? ` · ${safe(item.condition)}`:''}</div></div>
+          <input class="return-qty" data-index="${index}" type="number" min="0" max="${remaining}" value="0" aria-label="Quantity returning for ${safe(item.name)}" />
+        </div>`;
+      }).join('');
+      $('#detailContent').innerHTML = `
+        <div class="detail-heading">
+          <div><h3>${safe(record.eventName)}</h3><div class="detail-sub">${safe(record.id)} · Borrowed ${normalizeDate(record.dateBorrowed)}</div></div>
+          <span class="status-pill ${statusClass(status)}">${statusLabel(status)}</span>
+        </div>
+        <div class="detail-info">
+          <div class="info-box"><div class="meta-label">Borrowed by</div><div class="meta-value">${safe(record.borrower)}</div></div>
+          <div class="info-box"><div class="meta-label">Contact</div><div class="meta-value">${safe(record.borrowerContact || '—')}</div></div>
+          <div class="info-box"><div class="meta-label">Venue</div><div class="meta-value">${safe(record.location || '—')}</div></div>
+          <div class="info-box"><div class="meta-label">Expected return</div><div class="meta-value">${record.dueDate ? normalizeDate(record.dueDate) : 'Not set'}</div></div>
+        </div>
+        <div class="section-label"><h3>Return items</h3><span>${outQty(record)} item${outQty(record)===1?'':'s'} still out</span></div>
+        <div class="return-list">${itemRows}</div>
+        ${record.notes ? `<div class="notes-box"><strong>Notes</strong>${safe(record.notes).replace(/\n/g,'<br>')}</div>` : ''}
+        <div class="attachment-section">
+          <div class="section-label"><h3>Attachments</h3><span>${Number(record.attachmentCount||0)} file${Number(record.attachmentCount||0)===1?'':'s'}</span></div>
+          <div class="saved-attachments" id="savedAttachments"></div>
+        </div>
+        <div class="detail-actions">
+          ${status !== 'returned' ? '<button class="primary-btn" id="saveReturnBtn">Save returned quantities</button><button class="soft-btn" id="markAllBtn">Mark all as returned</button>' : '<button class="soft-btn" id="reopenBtn">Reopen record</button>'}
+        </div>
+        <div class="danger-zone"><button class="danger-btn small-btn" id="deleteRecordBtn">Delete record</button></div>`;
+      $('#saveReturnBtn')?.addEventListener('click', saveReturnUpdates);
+      $('#markAllBtn')?.addEventListener('click', markAllReturned);
+      $('#reopenBtn')?.addEventListener('click', reopenRecord);
+      $('#deleteRecordBtn')?.addEventListener('click', deleteRecord);
+      renderSavedAttachments(record);
+      openModal('detailModal');
+      if(focusReturn) setTimeout(()=>$('.return-qty')?.focus(),250);
+    }
+
+    function saveReturnUpdates(){
+      const record = records.find(r=>r.id===activeRecordId); if(!record) return;
+      let changed = false;
+      $$('.return-qty','#detailContent').forEach(input=>{
+        const index = Number(input.dataset.index); const item = record.items[index];
+        const remaining = Math.max(0,Number(item.qty)-Number(item.returnedQty||0));
+        const adding = Math.max(0,Math.min(remaining,Number(input.value)||0));
+        if(adding > 0){ item.returnedQty = Number(item.returnedQty||0)+adding; changed=true; }
+      });
+      if(!changed){ showToast('Enter the quantity being returned first.'); return; }
+      if(!saveRecords()) return; renderRecords(); openDetails(record.id); showToast('Return status updated.');
+    }
+    function markAllReturned(){
+      const record = records.find(r=>r.id===activeRecordId); if(!record) return;
+      record.items.forEach(item=>item.returnedQty=Number(item.qty));
+      if(!saveRecords()) return; renderRecords(); openDetails(record.id); showToast('All items marked as returned.');
+    }
+    function reopenRecord(){
+      const record = records.find(r=>r.id===activeRecordId); if(!record) return;
+      record.items.forEach(item=>item.returnedQty=0);
+      if(!saveRecords()) return; renderRecords(); openDetails(record.id); showToast('Record reopened.');
+    }
+    function deleteRecord(){
+      const record = records.find(r=>r.id===activeRecordId); if(!record) return;
+
+      // Two-tap confirmation works more reliably on mobile/file-preview browsers than a native confirm popup.
+      if(deleteArmedId !== activeRecordId){
+        deleteArmedId = activeRecordId;
+        const button = $('#deleteRecordBtn');
+        if(button) button.textContent = 'Tap again to delete';
+        showToast('Tap Delete again within 4 seconds to confirm.');
+        clearTimeout(deleteConfirmTimer);
+        deleteConfirmTimer = setTimeout(()=>{
+          deleteArmedId = null;
+          const btn = $('#deleteRecordBtn');
+          if(btn) btn.textContent = 'Delete record';
+        }, 4000);
+        return;
+      }
+
+      clearTimeout(deleteConfirmTimer);
+      deleteArmedId = null;
+      const previousRecords = records;
+      records = records.filter(r=>r.id!==activeRecordId);
+      if(!saveRecords()){ records = previousRecords; return; }
+      deleteAttachmentsForRecord(record.id);
+      closeModal('detailModal'); renderRecords(); showToast('Record deleted.');
+    }
+
+    function clearFilters(){ $('#searchInput').value=''; $('#statusFilter').value='all'; $('#sortSelect').value='newest'; renderRecords(); }
+
+    function exportCSV(){
+      if(!records.length){ showToast('No records to export yet.'); return; }
+      const header = ['Record ID','Event / Project','Venue','Borrowed By','Contact','Date Borrowed','Expected Return','Status','Item','Qty Borrowed','Qty Returned','Qty Still Out','Condition','Notes'];
+      const rows = [];
+      records.forEach(r=>r.items.forEach(i=>rows.push([
+        r.id,r.eventName,r.location||'',r.borrower,r.borrowerContact||'',r.dateBorrowed,r.dueDate||'',statusLabel(getStatus(r)),i.name,i.qty,i.returnedQty||0,Math.max(0,Number(i.qty)-Number(i.returnedQty||0)),i.condition||'',r.notes||''
+      ])));
+      const csv = [header,...rows].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob(["\uFEFF"+csv],{type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob); const a=document.createElement('a');
+      a.href=url; a.download=`Borrowed_Returned_Items_${todayISO()}.csv`; a.click(); URL.revokeObjectURL(url);
+      showToast('CSV report downloaded.');
+    }
+
+    $('#openAddHero').addEventListener('click', openForm);
+    $('#openAddFab').addEventListener('click', openForm);
+    $('#openInventoryBtn').addEventListener('click', openInventory);
+    $('#inventoryForm').addEventListener('submit', saveInventoryItem);
+    $('#addItemBtn').addEventListener('click', ()=>addItemRow());
+    $('#attachmentInput').addEventListener('change', event => {
+      addPendingAttachments(event.target.files);
+      event.target.value = '';
+    });
+    $('#exportBtn').addEventListener('click', exportCSV);
+    $('#clearFiltersBtn').addEventListener('click', clearFilters);
+    $('#searchInput').addEventListener('input', renderRecords);
+    $('#statusFilter').addEventListener('change', renderRecords);
+    $('#sortSelect').addEventListener('change', renderRecords);
+    $('#dateBorrowed').addEventListener('change', syncDueDateMin);
+    $$('[data-close]').forEach(btn=>btn.addEventListener('click', ()=>{
+      const id = btn.dataset.close;
+      if(id === 'imageViewerModal') closeImageViewer(); else closeModal(id);
+    }));
+    $$('.modal-backdrop').forEach(backdrop=>backdrop.addEventListener('click', e=>{
+      if(e.target!==backdrop) return;
+      if(backdrop.id === 'imageViewerModal') closeImageViewer(); else closeModal(backdrop.id);
+    }));
+    document.addEventListener('keydown', e=>{
+      if(e.key !== 'Escape') return;
+      if($('#imageViewerModal')?.classList.contains('open')){ closeImageViewer(); return; }
+      $$('.modal-backdrop.open').forEach(m=>closeModal(m.id));
+    });
+
+    $('#recordForm').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const items = $$('.item-row','#itemRows').map(row=>{
+        const item = selectedInventoryItem(row);
+        return {
+          inventoryId:item?.id || '',
+          name:item?.name || '',
+          qty:Number($('.item-qty',row).value)||0,
+          returnedQty:0,
+          condition:$('.item-condition',row)?.value.trim()||''
+        };
+      }).filter(i=>i.name && i.qty>0);
+      if(!items.length){
+        showToast(inventory.length ? 'Select at least one valid item from inventory.' : 'Set up your inventory first, then select an item.');
+        return;
+      }
+      const requestedByItem = items.reduce((map, item) => {
+        map[item.inventoryId] = (map[item.inventoryId] || 0) + item.qty;
+        return map;
+      }, {});
+      const unavailable = Object.entries(requestedByItem).map(([id, qty]) => {
+        const inventoryItem = inventoryItemFor(id);
+        return inventoryItem && qty > inventoryAvailableQty(inventoryItem) ? {inventoryItem, qty, available:inventoryAvailableQty(inventoryItem)} : null;
+      }).filter(Boolean);
+      if(unavailable.length){
+        const first = unavailable[0];
+        const alternatives = alternativeItemsFor(first.inventoryItem).map(item => `${item.name} (${inventoryAvailableQty(item)} available)`).join(', ');
+        showToast(`${first.inventoryItem.name}: only ${first.available} available. ${alternatives ? `Try ${alternatives}.` : 'Choose an available alternative or update inventory.'}`);
+        refreshItemRowStatuses();
+        return;
+      }
+      const expectedReturn = $('#dueDate').value;
+      if(!expectedReturn){
+        showToast('Please fill out the Expected return date.');
+        $('#dueDate').focus();
+        return;
+      }
+      if($('#dateBorrowed').value && expectedReturn < $('#dateBorrowed').value){
+        showToast('Expected return cannot be earlier than Date borrowed.');
+        $('#dueDate').focus();
+        return;
+      }
+      const hasPhoto = pendingAttachments.some(file => isImage(file));
+      if(!hasPhoto){
+        showToast('Please attach at least 1 photo proof before saving.');
+        $('#attachmentInput').focus();
+        return;
+      }
+      const record = {
+        id:uid(), eventName:$('#eventName').value.trim(),location:$('#location').value.trim(),
+        borrower:$('#borrower').value.trim(),borrowerContact:$('#borrowerContact').value.trim(),
+        dateBorrowed:$('#dateBorrowed').value,dueDate:expectedReturn,notes:$('#notes').value.trim(),items,
+        attachmentCount: pendingAttachments.length,
+        createdAt:new Date().toISOString()
+      };
+      records.unshift(record);
+      if(!saveRecords()){ records.shift(); return; }
+      try{
+        await saveAttachments(record.id, pendingAttachments);
+        closeModal('formModal'); renderRecords(); showToast(pendingAttachments.length ? 'Record and attachments saved.' : 'Borrowed items saved.');
+      } catch(error){
+        console.error('Attachment save failed:', error);
+        record.attachmentCount = 0;
+        saveRecords();
+        closeModal('formModal'); renderRecords();
+        showToast('Record saved, pero hindi na-save ang attachment.');
+      }
+    });
+
+    loadRecords();
+    loadInventory();
+    $('#dateBorrowed').value = todayISO();
+    syncDueDateMin();
+    renderRecords();
+  </script>
+</body>
+</html>
